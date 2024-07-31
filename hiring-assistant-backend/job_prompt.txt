@@ -1,0 +1,57 @@
+Enclosed in *** is a webpage of a job posting. Extract all the necessary information about the job and organize the information in the following categories. 
+1) Title
+2) Skills
+3) Minimum Qualifications
+4) Preferred Qualifications
+
+Here is an example of how you can extract the required information from a given job description. 
+
+====EXAMPLE START====
+== START JOB DESCRIPTION==
+Summary
+Posted: Jun 25, 2024
+Weekly Hours: 40
+Role Number:200556628
+Be a significant part of the Hardware Test Engineering Core Infrastructure team that is at the center of the Apple Factory’s Development Process. This team is responsible for application development to improve delivery, management, and scalability of factory test platforms to factories located worldwide. We are looking for a curious, hardworking, self-motivated software developer to work on several key systems as a member of our collaborative team.
+Description
+We are currently seeking an individual with strong backend software skills and a willingness to work with both C++ and Swift. 
+You will work with a team of extraordinary engineers to develop and deploy mass-production friendly solutions for all Apple products. This would include architecting, developing, deploying and triaging software used in the factory during manufacture of new products. Responsibilities would include triaging and diagnosing issues with cross-functional teams from diverse engineering backgrounds during new product bringup, as well as working with external vendors on defining better solutions and processes.
+Minimum Qualifications
+
+    Backend software development experience
+    Extensive expertise with Objective-C, C++, or Swift
+    Proficient with UNIX/Linux or macOS
+    Experience with scripting languages (Bash, Python, Perl)
+    Excellent knowledge of software testing methodologies & practices
+    Excellent knowledge of source code management concepts and systems (Git)
+    Effective communication and an ability to collaborate with those around them
+
+Preferred Qualifications
+
+    4+ years of backend software development experience in Unix or Linux environment with expertise in C++
+    BS degree in Computer Science, Computer Engineering or equivalent practical experience.
+
+Pay & Benefits
+
+    At Apple, base pay is one part of our total compensation package and is determined within a range. This provides the opportunity to progress as you grow and develop within a role. The base pay range for this role is between $135,400 and $250,600, and your base pay will depend on your skills, qualifications, experience, and location.
+
+    Apple employees also have the opportunity to become an Apple shareholder through participation in Apple’s discretionary employee stock programs. Apple employees are eligible for discretionary restricted stock unit awards, and can purchase Apple stock at a discount if voluntarily participating in Apple’s Employee Stock Purchase Plan. You’ll also receive benefits including: Comprehensive medical and dental coverage, retirement benefits, a range of discounted products and free services, and for formal education related to advancing your career at Apple, reimbursement for certain educational expenses — including tuition. Additionally, this role might be eligible for discretionary bonuses or commission payments as well as relocation. Learn more about Apple Benefits.
+
+    Note: Apple benefit, compensation and employee stock programs are subject to eligibility requirements and other terms of the applicable plan or program.
+
+    Apple is an equal opportunity employer that is committed to inclusion and diversity. We take affirmative action to ensure equal opportunity for all applicants without regard to race, color, religion, sex, sexual orientation, gender identity, national origin, disability, Veteran status, or other legally protected characteristics. Learn more about your EEO rights as an applicant.
+==END JOB DESCRIPTION==
+
+    Title: Software Engineer, Software and Services, Apple
+    Skills: Objective-C, C++, Swift, UNIX/Linux, macOS, Bash, Python, Perl
+    Minimum Qualifications: Backend software development experience,Experience with scripting languages, Excellent knowledge of software testing methodologies & practices, Excellent knowledge of source code management concepts and systems, Effective communication and an ability to collaborate with those around them
+    Preferred Qualifications: 4+ years of backend software development experience in Unix or Linux environment with expertise in C++, BS degree in Computer Science, Computer Engineering or equivalent practical experience.
+
+====EXAMPLE END====
+
+***
+{web_page}
+***
+
+Just give your final summary, no need to give any additional text. I want the out put to have each of the subsection enclosed in a <p> tag for future use in a web document
+

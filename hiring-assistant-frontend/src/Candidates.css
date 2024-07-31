@@ -1,0 +1,8 @@
+.candidate-section {
+    width: 50%;
+    height: 100vh;
+    border-style: double;
+    border-color: blue;
+
+    text-align: center;
+}
