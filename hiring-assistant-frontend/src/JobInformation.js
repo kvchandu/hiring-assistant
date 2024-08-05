@@ -4,7 +4,7 @@ import URLBox from "./URLBox";
 import JobDetails from "./JobDetails";
 import axios from "axios";
 
-function JobInformation() {
+function JobInformation({ passResponse }) {
   const [jobUrl, setJobUrl] = useState("");
   const [gptResponse, setgptResponse] = useState("");
 
@@ -24,19 +24,13 @@ function JobInformation() {
 
         //   setResponse(result.data.response);
         setgptResponse(result.data.response);
+        passResponse(result.data.response);
       }
     } catch (error) {
       console.error("Error:", error);
       // setJobUrl("An error occurred while processing your request.");
     }
   };
-
-  // function receiveResponse() {
-  //   // const tags = gptResponse.split("</p>");
-
-  // }
-
-  // useEffect(receiveResponse, [gptResponse]);
 
   useEffect(() => {
     console.log("Job URL: ", jobUrl);

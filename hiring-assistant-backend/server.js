@@ -48,6 +48,7 @@ const model = new ChatOpenAI({
 
 app.post("/getrelevantresumes", async (req, res) => {
   try {
+    console.log("REQ: ", req);
     const jobDescription = req.body.jobDescription;
 
     if (!jobDescription) {
@@ -57,10 +58,24 @@ app.post("/getrelevantresumes", async (req, res) => {
     if (!global.vectorstore) {
       return res.status(500).json({ error: "Vector store is not initialized" });
     }
+    // console.log("JOB DESCRIPTION: ", JSON.stringify(jobDescription));
+    const keys = Object.entries(jobDescription);
+    var descriptionString = "";
+    for (const [key, value] of keys) {
+      var temp = "";
+      if (Array.isArray(value)) {
+        temp = value.join(",");
+      } else {
+        temp = value;
+      }
 
+      descriptionString = descriptionString + key + ":  " + temp + "\n";
+    }
+
+    console.log("DESCRIPTION STRING: ", descriptionString);
     // Perform similarity search for top 20 results
     const searchResults = await global.vectorstore.similaritySearch(
-      jobDescription,
+      descriptionString,
       20
     );
 
@@ -106,7 +121,6 @@ app.post("/getrelevantresumes", async (req, res) => {
 app.post("/jobdescription", async (req, res) => {
   try {
     const url = req.body.jobUrl;
-    
 
     const loader = new CheerioWebBaseLoader(url);
     const docs = await loader.load();
