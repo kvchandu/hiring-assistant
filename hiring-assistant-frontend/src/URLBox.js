@@ -6,7 +6,7 @@ function URLBox({ getUrl }) {
   function handleSubmit(e) {
     e.preventDefault();
     console.log("Form Submitted");
-    getUrl({ url });
+    getUrl(url);
   }
 
   function onChangeHandler(event) {

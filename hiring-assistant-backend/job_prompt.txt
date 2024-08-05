@@ -53,5 +53,5 @@ Pay & Benefits
 {web_page}
 ***
 
-Just give your final summary, no need to give any additional text. I want the out put to have each of the subsection enclosed in a <p> tag for future use in a web document
+Just give your final summary, no need to give any additional text. I want the out put in JSON format, each key corresponding to a subheading. 
 

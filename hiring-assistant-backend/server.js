@@ -106,6 +106,7 @@ app.post("/getrelevantresumes", async (req, res) => {
 app.post("/jobdescription", async (req, res) => {
   try {
     const url = req.body.jobUrl;
+    
 
     const loader = new CheerioWebBaseLoader(url);
     const docs = await loader.load();
