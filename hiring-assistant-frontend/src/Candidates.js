@@ -6,11 +6,26 @@ import Resume from "./Resume";
 function Candidates({ gptResponse }) {
   const [responseObject, setResponseObject] = useState({});
   const [relevantResumes, setRelevantResumes] = useState({});
+
+  function compareResumes(a, b) {
+    return b.score.score - a.score.score;
+  }
+
+  function sortResumes() {
+    console.log("relevant Resumes: ", relevantResumes);
+    if (Array.isArray(relevantResumes)) {
+      setRelevantResumes(relevantResumes.toSorted(compareResumes));
+    }
+    console.log("Sorted Relevant Resumes: ", relevantResumes);
+  }
+
+  // useEffect(sortResumes, [relevantResumes]);
+
   useEffect(() => {
     try {
       const parsedResponse = JSON.parse(gptResponse);
       setResponseObject(parsedResponse);
-      console.log(parsedResponse);
+      // console.log(parsedResponse);
     } catch (e) {
       console.error("Error parsing JSON:", e);
     }
@@ -22,7 +37,7 @@ function Candidates({ gptResponse }) {
 
   async function getRelevantResumes() {
     try {
-      console.log("HERE");
+      // console.log("HERE");
       const result = await axios.post(
         "http://localhost:3002/getrelevantresumes",
         { jobDescription: responseObject },
@@ -33,8 +48,34 @@ function Candidates({ gptResponse }) {
         }
       );
 
-      console.log(result.data.relevantResumes);
-      setRelevantResumes(result.data.relevantResumes);
+      // console.log(result.data.relevantResumes);
+      const final_set = {};
+
+      const relevantResumesWithScores = await Promise.all(
+        result.data.relevantResumes.map(async (element) => {
+          try {
+            const resumeScore = await axios.post(
+              "http://localhost:3002/calculate-resume-score",
+              {
+                jobDescription: responseObject,
+                resumePath: element.metadata.source.split("/data")[1],
+              },
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            return { ...element, score: resumeScore.data };
+          } catch (error) {
+            console.error("Error calculating resume score:", error);
+            return { ...element, score: 0 }; // Assign a default score if calculation fails
+          }
+        })
+      );
+
+      const sortedResumes = relevantResumesWithScores.sort(compareResumes);
+      setRelevantResumes(sortedResumes);
     } catch {}
   }
 

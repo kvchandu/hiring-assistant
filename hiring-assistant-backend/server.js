@@ -214,6 +214,19 @@ app.post("/calculate-resume-score", async (req, res) => {
   try {
     const { jobDescription, resumePath } = req.body;
 
+    const keys = Object.entries(jobDescription);
+    var descriptionString = "";
+    for (const [key, value] of keys) {
+      var temp = "";
+      if (Array.isArray(value)) {
+        temp = value.join(",");
+      } else {
+        temp = value;
+      }
+
+      descriptionString = descriptionString + key + ":  " + temp + "\n";
+    }
+
     const fullResumePath = path.join(__dirname, "..", "data", resumePath);
     // console.log("Full Resume Path", fullResumePath);
     const loader = new PDFLoader(fullResumePath);
@@ -222,7 +235,7 @@ app.post("/calculate-resume-score", async (req, res) => {
 
     const prompt = PromptTemplate.fromTemplate(matching_skills_prompt);
     const formattedPrompt = await prompt.format({
-      job_description: jobDescription,
+      job_description: descriptionString,
       resume: loadedResume,
     });
 

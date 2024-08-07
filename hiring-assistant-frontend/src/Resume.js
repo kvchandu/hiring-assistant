@@ -15,16 +15,16 @@ function Resume({ resume, index }) {
         >
           Resume: {index + 1}
         </a>
-
+        <p>Resume Score: {resume.score.score}</p>
         <button> Start Interview</button>
       </div>
       <div className="resume-right">
-        <h5>Matching sections from Resume</h5>
-        <ul>
-          {resume.matches.map((match) => (
-            <li>{match}</li>
-          ))}
-        </ul>
+        {Object.entries(resume.score.match).map(([key, value]) => (
+          <div>
+            <p>{key}</p>
+            <p>{JSON.stringify(value)}</p>
+          </div>
+        ))}
       </div>
       {/* <br /> */}
     </div>
