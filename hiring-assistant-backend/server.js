@@ -24,6 +24,7 @@ const { BufferMemory } = require("langchain/memory");
 app.use(cors());
 
 const bodyParser = require("body-parser");
+const { match } = require("assert");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -48,7 +49,7 @@ const model = new ChatOpenAI({
 
 app.post("/getrelevantresumes", async (req, res) => {
   try {
-    console.log("REQ: ", req);
+    // console.log("REQ: ", req);
     const jobDescription = req.body.jobDescription;
 
     if (!jobDescription) {
@@ -72,7 +73,7 @@ app.post("/getrelevantresumes", async (req, res) => {
       descriptionString = descriptionString + key + ":  " + temp + "\n";
     }
 
-    console.log("DESCRIPTION STRING: ", descriptionString);
+    // console.log("DESCRIPTION STRING: ", descriptionString);
     // Perform similarity search for top 20 results
     const searchResults = await global.vectorstore.similaritySearch(
       descriptionString,
@@ -81,9 +82,16 @@ app.post("/getrelevantresumes", async (req, res) => {
 
     // Count occurrences of each source
     const sourceCounts = {};
+    const matches = {};
     searchResults.forEach((result) => {
       const source = result.metadata.source;
       sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+      if (!matches[source]) {
+        matches[source] = [];
+      }
+
+      console.log("Result: ", result);
+      matches[source].push(result.pageContent);
     });
 
     // Sort results by source frequency, then by similarity score
@@ -104,11 +112,11 @@ app.post("/getrelevantresumes", async (req, res) => {
         uniqueSources.add(result.metadata.source);
         relevantResumes.push({
           content: result.pageContent,
+          matches: matches[result.metadata.source],
           metadata: result.metadata,
         });
       }
     }
-
     res.json({ relevantResumes });
   } catch (error) {
     console.error("Error in getrelevantresumes:", error);
@@ -207,7 +215,7 @@ app.post("/calculate-resume-score", async (req, res) => {
     const { jobDescription, resumePath } = req.body;
 
     const fullResumePath = path.join(__dirname, "..", "data", resumePath);
-    console.log("Full Resume Path", fullResumePath);
+    // console.log("Full Resume Path", fullResumePath);
     const loader = new PDFLoader(fullResumePath);
     const document = await loader.load();
     const loadedResume = document.map((doc) => doc.pageContent).join(" ");
@@ -219,11 +227,11 @@ app.post("/calculate-resume-score", async (req, res) => {
     });
 
     const response = await model.invoke(formattedPrompt);
-    console.log(response.content);
+    // console.log(response.content);
     let match;
     try {
       match = JSON.parse(response.content);
-      console.log(match);
+      // console.log(match);
     } catch (error) {
       console.error("Error parsing LLM response:", error);
       return res.status(500).json({ error: "Failed to parse LLM response" });
@@ -253,8 +261,8 @@ async function processDocuments() {
     console.log(`Loaded ${documents.length} documents`);
 
     const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 1000,
-      chunkOverlap: 200,
+      chunkSize: 200,
+      chunkOverlap: 20,
     });
     const chunks = await textSplitter.splitDocuments(documents);
 

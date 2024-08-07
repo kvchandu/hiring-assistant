@@ -1,0 +1,23 @@
+.resume-card {
+    border-style: solid;
+    border-color: green;
+    margin-bottom: 20px;
+    padding: 20px;
+    display: flex;
+}
+
+.resume-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-direction: column;
+    width: 20%;
+}
+
+.resume-right {
+    width: 80%;
+}
+
+.resume-right li {
+    margin: 15px;
+}
