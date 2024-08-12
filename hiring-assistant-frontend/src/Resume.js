@@ -1,7 +1,22 @@
 import "./Resume.css";
+import { useNavigate } from "react-router-dom";
 
-function Resume({ resume, index }) {
+function Resume({ resume, index, jobDescription }) {
   console.log("RESUME HERE:", resume);
+  const navigate = useNavigate();
+
+  const generateInterviewUrl = (source) => {
+    // Extract the unique part of the source (assuming it's the filename)
+    const filename = source.split("/data")[1];
+    // Create a URL-friendly string
+    const urlFriendlyName = encodeURIComponent(filename);
+    return "/interview/" + urlFriendlyName;
+  };
+
+  const handleStartInterview = () => {
+    const interviewUrl = generateInterviewUrl(resume.metadata.source);
+    navigate(interviewUrl, { state: { jobDescription: jobDescription } });
+  };
 
   return (
     <div className="resume-card">
@@ -16,7 +31,7 @@ function Resume({ resume, index }) {
           Resume: {index + 1}
         </a>
         <p>Resume Score: {resume.score.score}</p>
-        <button> Start Interview</button>
+        <button onClick={handleStartInterview}> Start Interview</button>
       </div>
       <div className="resume-right">
         {Object.entries(resume.score.match).map(([key, value]) => (

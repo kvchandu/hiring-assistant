@@ -10,6 +10,9 @@ const { ChatOpenAI } = require("@langchain/openai");
 const {
   PromptTemplate,
   ChatPromptTemplate,
+  SystemMessagePromptTemplate,
+  MessagesPlaceholder,
+  HumanMessagePromptTemplate,
 } = require("@langchain/core/prompts");
 const { LLMChain } = require("langchain/chains");
 const {
@@ -28,7 +31,7 @@ const { match } = require("assert");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-console.log(path.join(__dirname, "..", "data"));
+// console.log(path.join(__dirname, "..", "data"));
 app.use("/pdfs", express.static(path.join(__dirname, "..", "data")));
 
 async function loadPromptFromFile(filename) {
@@ -37,7 +40,7 @@ async function loadPromptFromFile(filename) {
     const data = await fs.readFile(filePath, "utf8");
     return data;
   } catch (error) {
-    console.error("Error reading prompt file:", error);
+    // console.error("Error reading prompt file:", error);
     throw error;
   }
 }
@@ -90,7 +93,7 @@ app.post("/getrelevantresumes", async (req, res) => {
         matches[source] = [];
       }
 
-      console.log("Result: ", result);
+      // console.log("Result: ", result);
       matches[source].push(result.pageContent);
     });
 
@@ -107,7 +110,7 @@ app.post("/getrelevantresumes", async (req, res) => {
     const uniqueSources = new Set();
     const relevantResumes = [];
     for (const result of sortedResults) {
-      if (uniqueSources.size >= 5) break;
+      if (uniqueSources.size >= 3) break;
       if (!uniqueSources.has(result.metadata.source)) {
         uniqueSources.add(result.metadata.source);
         relevantResumes.push({
@@ -119,7 +122,7 @@ app.post("/getrelevantresumes", async (req, res) => {
     }
     res.json({ relevantResumes });
   } catch (error) {
-    console.error("Error in getrelevantresumes:", error);
+    // console.error("Error in getrelevantresumes:", error);
     res
       .status(500)
       .json({ error: "An error occurred while processing the request" });
@@ -150,7 +153,7 @@ app.post("/jobdescription", async (req, res) => {
 
     res.json({ response: result.content });
   } catch (error) {
-    console.error("Error:", error);
+    // console.error("Error:", error);
     res.status(500).json({ error: "An error occurred" });
   }
 });
@@ -246,7 +249,7 @@ app.post("/calculate-resume-score", async (req, res) => {
       match = JSON.parse(response.content);
       // console.log(match);
     } catch (error) {
-      console.error("Error parsing LLM response:", error);
+      // console.error("Error parsing LLM response:", error);
       return res.status(500).json({ error: "Failed to parse LLM response" });
     }
 
@@ -262,7 +265,7 @@ app.post("/calculate-resume-score", async (req, res) => {
 
     res.json({ score, match });
   } catch (error) {
-    console.error("Error calculating resume score:", error);
+    // console.error("Error calculating resume score:", error);
     res.status(500).json({ error: "Failed to calculate resume score" });
   }
 });
@@ -271,7 +274,7 @@ async function processDocuments() {
   const directory = "/Users/chandu/Documents/hiring-assistant/data/";
   try {
     const documents = await loadDocuments(directory);
-    console.log(`Loaded ${documents.length} documents`);
+    // console.log(`Loaded ${documents.length} documents`);
 
     const textSplitter = new RecursiveCharacterTextSplitter({
       chunkSize: 200,
@@ -282,84 +285,96 @@ async function processDocuments() {
     const embeddings = new OpenAIEmbeddings();
     const vectorstore = await FaissStore.fromDocuments(chunks, embeddings);
 
-    console.log("Vector store created successfully");
+    // console.log("Vector store created successfully");
     return vectorstore;
   } catch (error) {
-    console.error("Error processing documents:", error);
+    // console.error("Error processing documents:", error);
   }
 }
 
-// Define the system template
-const system_template = `You are an expert software engineering recruiter. You are given a resume from the user. Enclosed in *** is the job description for which you will be conducting an interview. The interview questions and the responses will be used by another recruiter to evaluate the candidate's fit with the company.
-So ask questions that would cover all requirements mentioned in the job requirements.
-Below are the steps you must perform. Ask only one question at a time.
-1) Greet the candidate based on the first name found on the resume and Read out a summarized version of the job description to the candidate.
-2) Begin the interview by discussing the educational background. Read out the job's requirement for education and mention if the candidate's education meets the demand. Follow up with a question relating to the coursework or any other academic involvement that would answer any inconsistency with the job requirement.
-Ask any follow up questions if necessary.
+// System template for the interview process
+const systemTemplate = `You are an expert software engineering recruiter. You are given a resume from the user. Enclosed in *** is the job description for which you will be conducting an interview. The interview questions and the responses will be used by another recruiter to evaluate the candidate's fit with the company. 
+So ask questions that would cover all requirements mentioned in the job requirements. 
+
+Below are the steps you must perform. Ask only one question at a time. 
+1) Greet the candidate based on the first name found on the resume and Read out a summarized version of the job description to the candidate. 
+2) Begin the interview by discussing the educational background. Read out the job's requirement for education and mention if the candidate's education meets the demand. Follow up with a question relating to the coursework or any other academic involvement that would answer any inconsistency with the job requirement. 
+Ask any follow up questions if necessary. 
 3) Move on to the work experience of the candidate. For each position in the candidate's work experience, determine if that experience matches the job requirement. If there is an exact match in the technologies
 ask a technical question confirming the legibility of the experience. If there is a relevant technology but not an exact match (like a different programming language experience but in the same domain), ask about how the candidate
-thinks his experience aligns with the requirement.
-4) Do the same with the Projects section if the candidate has any. Ask questions only if necessary if there is any inconsistencies with the job requirement.
-5) Ask 1-2 technical questions on topics that are most important to the job.
-***{job_description}***
-`;
+thinks his experience aligns with the requirement. 
+4) Do the same with the Projects section if the candidate has any. Ask questions only if necessary if there is any inconsistencies with the job requirement. 
+5) Ask 1-2 technical questions on topics that are most important to the job. 
 
-// Create the prompt template
-const prompt = ChatPromptTemplate.fromMessages([
-  ["system", system_template],
-  ["human", "{input}"],
+***{job_description}***
+
+***{resume}***`;
+
+const chatPrompt = ChatPromptTemplate.fromPromptMessages([
+  SystemMessagePromptTemplate.fromTemplate(systemTemplate),
+  new MessagesPlaceholder("history"),
+  HumanMessagePromptTemplate.fromTemplate("{input}"),
 ]);
 
 const memory = new BufferMemory({ returnMessages: true, memoryKey: "history" });
-const conversation = new LLMChain({
-  memory: memory,
-  prompt: prompt,
-  llm: model,
-});
 
-app.post("/interview", async (req, res) => {
+let conversationChain;
+
+app.post("/initiate-interview", async (req, res) => {
+  const { jobDescription, resumePath } = req.body;
+  console.log(resumePath);
   try {
-    const { resumePath, job_description, message } = req.body;
-
-    if (!resumePath || !job_description) {
-      return res
-        .status(400)
-        .json({ error: "Resume path and job description are required" });
-    }
-
     // Load the resume content
     const fullResumePath = path.join(__dirname, "..", "data", resumePath);
+
     const loader = new PDFLoader(fullResumePath);
     const docs = await loader.load();
     const resumeContent = docs.map((doc) => doc.pageContent).join("\n");
 
-    let response;
-    if (!message) {
-      // Initial message
-      const initialPrompt = `Resume:\n${resumeContent}\n\nJob Description:\n${job_description}\n\nPlease start the interview based on this information.`;
-      response = await conversation.call({ input: initialPrompt });
-    } else {
-      // Subsequent messages
-      response = await conversation.call({ input: message });
-    }
+    conversationChain = new ConversationChain({
+      memory: memory,
+      prompt: chatPrompt,
+      llm: model,
+    });
 
-    res.json({ response: response.text });
+    const response = await conversationChain.call({
+      input: "Let's start the interview.",
+      job_description: jobDescription,
+      resume: resumeContent,
+    });
+
+    res.json({ reply: response.response });
   } catch (error) {
-    console.error("Error in interview endpoint:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while processing the request" });
+    // console.error("Error initiating interview:", error);
+    res.status(500);
+    // .json({ error: "An error occurred while initiating the interview" });
   }
 });
 
-// Call this function when your server starts
+app.post("/interview", async (req, res) => {
+  const { message } = req.body;
+
+  if (!conversationChain) {
+    return res.status(400).json({
+      // error: "Interview not initiated. Please call /initiate-interview first.",
+    });
+  }
+
+  try {
+    const response = await conversationChain.call({ input: message });
+    res.json({ reply: response.response });
+  } catch (error) {
+    // console.error("Error in chat:", error);
+    res.status(500);
+    // .json({ error: "An error occurred during the conversation" });
+  }
+});
+
 processDocuments()
   .then((vectorstore) => {
-    // You can now use the vectorstore in your server routes
-    // For example, you might want to store it in a global variable or pass it to your route handlers
     global.vectorstore = vectorstore;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((error) => {
-    console.error("Failed to process documents:", error);
+    // console.error("Failed to process documents:", error);
   });

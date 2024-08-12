@@ -89,7 +89,11 @@ function Candidates({ gptResponse }) {
 
       {relevantResumes && relevantResumes.length > 0 ? (
         relevantResumes.map((resume, index) => (
-          <Resume resume={resume} index={index} />
+          <Resume
+            resume={resume}
+            index={index}
+            jobDescription={responseObject}
+          />
         ))
       ) : (
         <p>No relevant resumes found.</p>
