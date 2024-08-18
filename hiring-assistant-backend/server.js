@@ -125,55 +125,55 @@ let jobDescriptionGlobal;
 let resumeContentGlobal;
 let currentResumePath = "";
 
-app.post("/initiate-interview", async (req, res) => {
-  const { jobDescription, resumePath } = req.body;
+// app.post("/initiate-interview", async (req, res) => {
+//   const { jobDescription, resumePath } = req.body;
 
-  try {
-    // Load the resume content
-    const fullResumePath = path.join(__dirname, "..", "data", resumePath);
-    const loader = new PDFLoader(fullResumePath);
-    const docs = await loader.load();
-    const resumeContent = docs.map((doc) => doc.pageContent).join("\n");
+//   try {
+//     // Load the resume content
+//     const fullResumePath = path.join(__dirname, "..", "data", resumePath);
+//     const loader = new PDFLoader(fullResumePath);
+//     const docs = await loader.load();
+//     const resumeContent = docs.map((doc) => doc.pageContent).join("\n");
 
-    currentResumePath = resumePath;
+//     currentResumePath = resumePath;
 
-    // Store job description and resume content globally
-    jobDescriptionGlobal = jobDescription;
-    resumeContentGlobal = resumeContent;
+//     // Store job description and resume content globally
+//     jobDescriptionGlobal = jobDescription;
+//     resumeContentGlobal = resumeContent;
 
-    // Initialize a new chat history for this interview
-    chatHistory = new ChatMessageHistory();
+//     // Initialize a new chat history for this interview
+//     chatHistory = new ChatMessageHistory();
 
-    // Set up the conversation chain with the new chat history
-    conversationChain = new ConversationChain({
-      memory: new BufferMemory({
-        chatHistory: chatHistory,
-        returnMessages: true,
-        memoryKey: "history",
-        inputKey: "input",
-      }),
-      prompt: chatPrompt,
-      llm: model,
-    });
+//     // Set up the conversation chain with the new chat history
+//     conversationChain = new ConversationChain({
+//       memory: new BufferMemory({
+//         chatHistory: chatHistory,
+//         returnMessages: true,
+//         memoryKey: "history",
+//         inputKey: "input",
+//       }),
+//       prompt: chatPrompt,
+//       llm: model,
+//     });
 
-    // Start the interview with the context
-    const formattedPrompt = await chatPrompt.formatMessages({
-      job_description: jobDescription,
-      resume: resumeContent,
-      input: "Let's start the interview.",
-      history: [],
-    });
+//     // Start the interview with the context
+//     const formattedPrompt = await chatPrompt.formatMessages({
+//       job_description: jobDescription,
+//       resume: resumeContent,
+//       input: "Let's start the interview.",
+//       history: [],
+//     });
 
-    const response = await model.invoke(formattedPrompt);
+//     const response = await model.invoke(formattedPrompt);
 
-    res.json({ reply: response.content });
-  } catch (error) {
-    console.error("Error initiating interview:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while initiating the interview" });
-  }
-});
+//     res.json({ reply: response.content });
+//   } catch (error) {
+//     console.error("Error initiating interview:", error);
+//     res
+//       .status(500)
+//       .json({ error: "An error occurred while initiating the interview" });
+//   }
+// });
 
 app.post("/interview", async (req, res) => {
   const { message } = req.body;
