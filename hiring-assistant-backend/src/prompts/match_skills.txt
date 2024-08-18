@@ -1,0 +1,19 @@
+Given the following job description and resume, please analyze and provide the following information in JSON format:
+1. A list of skills that match between the job description and the resume.
+2. A list of skills mentioned in the job description but missing from the resume.
+3. A dictionary of job titles from the resume with their corresponding months of experience (only number).
+4. A list of educational qualifications mentioned in the resume.
+
+Job Description:
+{job_description}
+
+Resume:
+{resume}
+
+Please format your response as a JSON object with the following keys:
+{{
+  "matching skills": [],
+  "missing skills": [],
+  "job titles with months of experience": {{}},
+  "educational experience": []
+}}

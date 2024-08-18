@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Interview() {
+  const navigation = useNavigate();
   const { resumeId } = useParams();
   const location = useLocation();
   const { jobDescription } = location.state || {};
@@ -17,8 +19,17 @@ function Interview() {
     const decoded = decodeURIComponent(resumeId);
     console.log("decoded", decoded);
     setResumePath(decoded);
-    initiateInterview();
   }, [resumeId]);
+
+  const endInterview = async () => {
+    try {
+      await axios.post("http://localhost:3002/end-interview");
+      navigation("/");
+    } catch (error) {
+      console.error("Unable to end Interview:", error);
+      // Handle the error appropriately, maybe show an alert to the user
+    }
+  };
 
   const initiateInterview = async () => {
     setIsLoading(true);
@@ -26,7 +37,7 @@ function Interview() {
       const response = await axios.post(
         "http://localhost:3002/initiate-interview",
         {
-          jobDescription,
+          jobDescription: jobDescription,
           resumePath: resumePath,
         }
       );
@@ -54,7 +65,7 @@ function Interview() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:3001/chat", {
+      const response = await axios.post("http://localhost:3002/interview", {
         message: inputMessage,
       });
 
@@ -78,6 +89,7 @@ function Interview() {
 
   return (
     <div className="interview-container">
+      <button onClick={initiateInterview}>Start Interview</button>
       {/* <h1>Interview for {resumeData?.name || "Candidate"}</h1> */}
       <div className="chat-container">
         {messages.map((message, index) => (
@@ -98,6 +110,10 @@ function Interview() {
         <button onClick={sendMessage} disabled={isLoading}>
           Send
         </button>
+      </div>
+
+      <div>
+        <button onClick={endInterview}>End Interview</button>
       </div>
     </div>
   );

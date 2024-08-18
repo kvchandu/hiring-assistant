@@ -1,9 +1,7 @@
-const {
-  HtmlToTextTransformer,
-} = require("@langchain/community/document_transformers/html_to_text");
 require("dotenv").config();
 const { PDFLoader } = require("@langchain/community/document_loaders/fs/pdf");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
+const { ChatMessageHistory } = require("langchain/stores/message/in_memory");
 const express = require("express");
 const cors = require("cors");
 const { ChatOpenAI } = require("@langchain/openai");
@@ -13,8 +11,9 @@ const {
   SystemMessagePromptTemplate,
   MessagesPlaceholder,
   HumanMessagePromptTemplate,
+  PipelinePrompt,
 } = require("@langchain/core/prompts");
-const { LLMChain } = require("langchain/chains");
+const { LLMChain, ConversationChain } = require("langchain/chains");
 const {
   CheerioWebBaseLoader,
 } = require("@langchain/community/document_loaders/web/cheerio");
@@ -24,138 +23,23 @@ const path = require("path");
 const { FaissStore } = require("@langchain/community/vectorstores/faiss");
 const { OpenAIEmbeddings } = require("@langchain/openai");
 const { BufferMemory } = require("langchain/memory");
+
 app.use(cors());
 
 const bodyParser = require("body-parser");
 const { match } = require("assert");
+const { SystemMessage, HumanMessage } = require("@langchain/core/messages");
+
+const router = require("./src/routes/router");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// console.log(path.join(__dirname, "..", "data"));
+app.use("/", router);
 app.use("/pdfs", express.static(path.join(__dirname, "..", "data")));
-
-async function loadPromptFromFile(filename) {
-  try {
-    const filePath = path.join(__dirname, filename);
-    const data = await fs.readFile(filePath, "utf8");
-    return data;
-  } catch (error) {
-    // console.error("Error reading prompt file:", error);
-    throw error;
-  }
-}
 
 const model = new ChatOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0.9,
-});
-
-app.post("/getrelevantresumes", async (req, res) => {
-  try {
-    // console.log("REQ: ", req);
-    const jobDescription = req.body.jobDescription;
-
-    if (!jobDescription) {
-      return res.status(400).json({ error: "Job description is required" });
-    }
-
-    if (!global.vectorstore) {
-      return res.status(500).json({ error: "Vector store is not initialized" });
-    }
-    // console.log("JOB DESCRIPTION: ", JSON.stringify(jobDescription));
-    const keys = Object.entries(jobDescription);
-    var descriptionString = "";
-    for (const [key, value] of keys) {
-      var temp = "";
-      if (Array.isArray(value)) {
-        temp = value.join(",");
-      } else {
-        temp = value;
-      }
-
-      descriptionString = descriptionString + key + ":  " + temp + "\n";
-    }
-
-    // console.log("DESCRIPTION STRING: ", descriptionString);
-    // Perform similarity search for top 20 results
-    const searchResults = await global.vectorstore.similaritySearch(
-      descriptionString,
-      20
-    );
-
-    // Count occurrences of each source
-    const sourceCounts = {};
-    const matches = {};
-    searchResults.forEach((result) => {
-      const source = result.metadata.source;
-      sourceCounts[source] = (sourceCounts[source] || 0) + 1;
-      if (!matches[source]) {
-        matches[source] = [];
-      }
-
-      // console.log("Result: ", result);
-      matches[source].push(result.pageContent);
-    });
-
-    // Sort results by source frequency, then by similarity score
-    const sortedResults = searchResults.sort((a, b) => {
-      const countDiff =
-        sourceCounts[b.metadata.source] - sourceCounts[a.metadata.source];
-      if (countDiff !== 0) return countDiff;
-      // If counts are equal, sort by similarity score (assuming lower index means higher similarity)
-      return searchResults.indexOf(a) - searchResults.indexOf(b);
-    });
-
-    // Take top 5 unique sources
-    const uniqueSources = new Set();
-    const relevantResumes = [];
-    for (const result of sortedResults) {
-      if (uniqueSources.size >= 3) break;
-      if (!uniqueSources.has(result.metadata.source)) {
-        uniqueSources.add(result.metadata.source);
-        relevantResumes.push({
-          content: result.pageContent,
-          matches: matches[result.metadata.source],
-          metadata: result.metadata,
-        });
-      }
-    }
-    res.json({ relevantResumes });
-  } catch (error) {
-    // console.error("Error in getrelevantresumes:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while processing the request" });
-  }
-});
-
-app.post("/jobdescription", async (req, res) => {
-  try {
-    const url = req.body.jobUrl;
-
-    const loader = new CheerioWebBaseLoader(url);
-    const docs = await loader.load();
-    // console.log(docs[0].pageContent);
-    const transformer = new HtmlToTextTransformer();
-    const webContent = await transformer.invoke(docs);
-
-    const system_prompt = await loadPromptFromFile("job_prompt.txt");
-
-    // console.log(system_prompt);
-
-    const prompt = ChatPromptTemplate.fromTemplate(system_prompt);
-    const messages = await prompt.formatMessages({
-      web_page: webContent[0].pageContent,
-    });
-
-    const result = await model.invoke(messages);
-    // console.log(result.content);
-
-    res.json({ response: result.content });
-  } catch (error) {
-    // console.error("Error:", error);
-    res.status(500).json({ error: "An error occurred" });
-  }
 });
 
 const PORT = 3002;
@@ -191,85 +75,6 @@ async function loadDocuments(directory, maxDocsPerCategory = 5) {
   return documents;
 }
 
-const matching_skills_prompt = `
-Given the following job description and resume, please analyze and provide the following information in JSON format:
-1. A list of skills that match between the job description and the resume.
-2. A list of skills mentioned in the job description but missing from the resume.
-3. A dictionary of job titles from the resume with their corresponding months of experience (only number).
-4. A list of educational qualifications mentioned in the resume.
-
-Job Description:
-{job_description}
-
-Resume:
-{resume}
-
-Please format your response as a JSON object with the following keys:
-{{
-  "matching skills": [],
-  "missing skills": [],
-  "job titles with months of experience": {{}},
-  "educational experience": []
-}}
-`;
-
-app.post("/calculate-resume-score", async (req, res) => {
-  try {
-    const { jobDescription, resumePath } = req.body;
-
-    const keys = Object.entries(jobDescription);
-    var descriptionString = "";
-    for (const [key, value] of keys) {
-      var temp = "";
-      if (Array.isArray(value)) {
-        temp = value.join(",");
-      } else {
-        temp = value;
-      }
-
-      descriptionString = descriptionString + key + ":  " + temp + "\n";
-    }
-
-    const fullResumePath = path.join(__dirname, "..", "data", resumePath);
-    // console.log("Full Resume Path", fullResumePath);
-    const loader = new PDFLoader(fullResumePath);
-    const document = await loader.load();
-    const loadedResume = document.map((doc) => doc.pageContent).join(" ");
-
-    const prompt = PromptTemplate.fromTemplate(matching_skills_prompt);
-    const formattedPrompt = await prompt.format({
-      job_description: descriptionString,
-      resume: loadedResume,
-    });
-
-    const response = await model.invoke(formattedPrompt);
-    // console.log(response.content);
-    let match;
-    try {
-      match = JSON.parse(response.content);
-      // console.log(match);
-    } catch (error) {
-      // console.error("Error parsing LLM response:", error);
-      return res.status(500).json({ error: "Failed to parse LLM response" });
-    }
-
-    const numMatches = match["matching skills"].length;
-    const numMisses = match["missing skills"].length;
-    const numMonths = Object.values(
-      match["job titles with months of experience"]
-    ).reduce((a, b) => a + b, 0);
-    const numDegrees = match["educational experience"].length;
-
-    const score =
-      numMatches * 2 - numMisses * 2 + numMonths * 0.5 + numDegrees * 1;
-
-    res.json({ score, match });
-  } catch (error) {
-    // console.error("Error calculating resume score:", error);
-    res.status(500).json({ error: "Failed to calculate resume score" });
-  }
-});
-
 async function processDocuments() {
   const directory = "/Users/chandu/Documents/hiring-assistant/data/";
   try {
@@ -291,8 +96,6 @@ async function processDocuments() {
     // console.error("Error processing documents:", error);
   }
 }
-
-// System template for the interview process
 const systemTemplate = `You are an expert software engineering recruiter. You are given a resume from the user. Enclosed in *** is the job description for which you will be conducting an interview. The interview questions and the responses will be used by another recruiter to evaluate the candidate's fit with the company. 
 So ask questions that would cover all requirements mentioned in the job requirements. 
 
@@ -316,38 +119,59 @@ const chatPrompt = ChatPromptTemplate.fromPromptMessages([
   HumanMessagePromptTemplate.fromTemplate("{input}"),
 ]);
 
-const memory = new BufferMemory({ returnMessages: true, memoryKey: "history" });
-
 let conversationChain;
+let chatHistory;
+let jobDescriptionGlobal;
+let resumeContentGlobal;
+let currentResumePath = "";
 
 app.post("/initiate-interview", async (req, res) => {
   const { jobDescription, resumePath } = req.body;
-  console.log(resumePath);
+
   try {
     // Load the resume content
     const fullResumePath = path.join(__dirname, "..", "data", resumePath);
-
     const loader = new PDFLoader(fullResumePath);
     const docs = await loader.load();
     const resumeContent = docs.map((doc) => doc.pageContent).join("\n");
 
+    currentResumePath = resumePath;
+
+    // Store job description and resume content globally
+    jobDescriptionGlobal = jobDescription;
+    resumeContentGlobal = resumeContent;
+
+    // Initialize a new chat history for this interview
+    chatHistory = new ChatMessageHistory();
+
+    // Set up the conversation chain with the new chat history
     conversationChain = new ConversationChain({
-      memory: memory,
+      memory: new BufferMemory({
+        chatHistory: chatHistory,
+        returnMessages: true,
+        memoryKey: "history",
+        inputKey: "input",
+      }),
       prompt: chatPrompt,
       llm: model,
     });
 
-    const response = await conversationChain.call({
-      input: "Let's start the interview.",
+    // Start the interview with the context
+    const formattedPrompt = await chatPrompt.formatMessages({
       job_description: jobDescription,
       resume: resumeContent,
+      input: "Let's start the interview.",
+      history: [],
     });
 
-    res.json({ reply: response.response });
+    const response = await model.invoke(formattedPrompt);
+
+    res.json({ reply: response.content });
   } catch (error) {
-    // console.error("Error initiating interview:", error);
-    res.status(500);
-    // .json({ error: "An error occurred while initiating the interview" });
+    console.error("Error initiating interview:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while initiating the interview" });
   }
 });
 
@@ -356,17 +180,126 @@ app.post("/interview", async (req, res) => {
 
   if (!conversationChain) {
     return res.status(400).json({
-      // error: "Interview not initiated. Please call /initiate-interview first.",
+      error: "Interview not initiated. Please call /initiate-interview first.",
     });
   }
 
   try {
-    const response = await conversationChain.call({ input: message });
-    res.json({ reply: response.response });
+    const formattedPrompt = await chatPrompt.formatMessages({
+      job_description: jobDescriptionGlobal,
+      resume: resumeContentGlobal,
+      input: message,
+      history: await chatHistory.getMessages(),
+    });
+
+    const response = await model.invoke(formattedPrompt);
+    await chatHistory.addUserMessage(message);
+    await chatHistory.addAIMessage(response.content);
+
+    res.json({ reply: response.content });
   } catch (error) {
-    // console.error("Error in chat:", error);
-    res.status(500);
-    // .json({ error: "An error occurred during the conversation" });
+    console.error("Error in chat:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred during the conversation" });
+  }
+});
+
+app.post("/end-interview", async (req, res) => {
+  // console.log("Here");
+  if (!conversationChain || !chatHistory || !currentResumePath) {
+    return res.status(400).json({
+      error:
+        "No active interview found or resume path not set. Please initiate an interview first.",
+    });
+  }
+
+  try {
+    // Get all messages from the chat history
+    const messages = await chatHistory.getMessages();
+
+    // Create a summary of the conversation
+    const summary = messages.map((msg) => ({
+      role: msg._getType() === "human" ? "User" : "AI",
+      content: msg.content,
+    }));
+
+    // Create a filename with the resume path
+    const filename = `interview_summary_${path.basename(
+      currentResumePath
+    )}.json`;
+    const filePath = path.join(__dirname, "interview_summaries", filename);
+
+    // Ensure the directory exists
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+
+    // Write the summary to a file
+    await fs.writeFile(filePath, JSON.stringify(summary, null, 2));
+
+    // Reset the conversation chain and chat history
+    conversationChain = null;
+    chatHistory = null;
+    currentResumePath = "";
+
+    res.json({ message: "Interview ended and summary saved successfully." });
+  } catch (error) {
+    console.error("Error ending interview:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while ending the interview" });
+  }
+});
+
+app.get("/check-interview", async (req, res) => {
+  const { resumePath } = req.query;
+
+  if (!resumePath) {
+    return res.status(400).json({ error: "Resume path is required" });
+  }
+
+  try {
+    const filename = `interview_summary_${path.basename(resumePath)}.json`;
+    const filePath = path.join(__dirname, "interview_summaries", filename);
+
+    await fs.access(filePath);
+    console.log("File found");
+    // If the file exists, an interview has been conducted
+    res.json({ interviewConducted: true });
+  } catch (error) {
+    // If the file doesn't exist, no interview has been conducted
+    res.json({ interviewConducted: false });
+  }
+});
+
+app.get("/get-interview-summary", async (req, res) => {
+  const { resumePath } = req.query;
+
+  if (!resumePath) {
+    return res.status(400).json({ error: "Resume path is required" });
+  }
+
+  try {
+    const filename = `interview_summary_${path.basename(resumePath)}.json`;
+    const filePath = path.join(__dirname, "interview_summaries", filename);
+
+    // Read the file
+    const fileContent = await fs.readFile(filePath, "utf8");
+
+    // Parse the JSON content
+    const summary = JSON.parse(fileContent);
+
+    res.json({ summary });
+  } catch (error) {
+    console.error("Error reading interview summary:", error);
+    if (error.code === "ENOENT") {
+      // File not found
+      res.status(404).json({ error: "Interview summary not found" });
+    } else {
+      // Other errors
+      res.status(500).json({
+        error: "An error occurred while fetching the interview summary",
+      });
+    }
   }
 });
 
@@ -375,6 +308,6 @@ processDocuments()
     global.vectorstore = vectorstore;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch((error) => {
-    // console.error("Failed to process documents:", error);
-  });
+  .catch((error) => {});
+
+// app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

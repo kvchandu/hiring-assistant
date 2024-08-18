@@ -1,0 +1,18 @@
+[
+  {
+    "role": "User",
+    "content": "Testing"
+  },
+  {
+    "role": "AI",
+    "content": "Hello! I hope you're doing well. Let's start with a quick overview of the job you've applied for.\n\nAs an Engineering Operations Director, this role requires a senior software executive who is skilled at strategic planning, product development, software improvements, and process changes. The ideal candidate should have experience in Agile methodologies, managing software development teams, and aligning engineering with business goals. Additionally, expertise in technologies such as Java, AWS, PHP, C++, HTML, Selenium, Jenkins, Python, and more is essential. Does this sound like a position you are interested in and qualified for?"
+  },
+  {
+    "role": "User",
+    "content": "Bye"
+  },
+  {
+    "role": "AI",
+    "content": "If you have any questions or need assistance in the future, feel free to reach out. Goodbye and take care!"
+  }
+]
