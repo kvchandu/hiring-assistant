@@ -7,34 +7,36 @@ import axios from "axios";
 function JobInformation({ passResponse }) {
   const [jobUrl, setJobUrl] = useState("");
   const [gptResponse, setgptResponse] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const callGPT = async () => {
     try {
+      setIsLoading(true);
       console.log("Sending Request", jobUrl);
-      if (jobUrl != "") {
-        const result = await axios.post(
-          "http://localhost:3002/jobdescription",
-          { jobUrl },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
 
-        //   setResponse(result.data.response);
-        setgptResponse(result.data.response);
-        passResponse(result.data.response);
-      }
+      const result = await axios.post(
+        "http://localhost:3002/jobdescription",
+        { jobUrl },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setgptResponse(result.data.response);
+      passResponse(result.data.response);
     } catch (error) {
       console.error("Error:", error);
-      // setJobUrl("An error occurred while processing your request.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log("Job URL: ", jobUrl);
-    callGPT();
+    if (jobUrl) {
+      console.log("Job URL: ", jobUrl);
+      callGPT();
+    }
   }, [jobUrl]);
 
   function handleFormData(data) {
@@ -44,8 +46,11 @@ function JobInformation({ passResponse }) {
   return (
     <div className="job-information">
       <URLBox getUrl={handleFormData} />
-      <p>{jobUrl}</p>
-      <JobDetails response={gptResponse} />
+      {isLoading ? (
+        <p>Loading job details...</p>
+      ) : (
+        <JobDetails response={gptResponse} />
+      )}
     </div>
   );
 }

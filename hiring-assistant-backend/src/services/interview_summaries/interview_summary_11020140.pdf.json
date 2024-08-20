@@ -1,0 +1,10 @@
+[
+  {
+    "role": "User",
+    "content": "Testing"
+  },
+  {
+    "role": "AI",
+    "content": "Hello! Based on your resume, you have a background as a Systems Analyst with experience in various technologies. I will be asking you questions related to your experience and skills. \n\nCan you please walk me through your educational background, including your degrees in Computer Science and Data Communications, and how that has prepared you for your roles as a Systems Analyst and Consultant?"
+  }
+]

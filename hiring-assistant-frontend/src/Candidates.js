@@ -19,20 +19,22 @@ function Candidates({ gptResponse }) {
     console.log("Sorted Relevant Resumes: ", relevantResumes);
   }
 
-  // useEffect(sortResumes, [relevantResumes]);
-
   useEffect(() => {
     try {
-      const parsedResponse = JSON.parse(gptResponse);
-      setResponseObject(parsedResponse);
-      // console.log(parsedResponse);
+      if (gptResponse) {
+        const parsedResponse = JSON.parse(gptResponse);
+        setResponseObject(parsedResponse);
+      }
     } catch (e) {
       console.error("Error parsing JSON:", e);
     }
   }, [gptResponse]);
 
   useEffect(() => {
-    getRelevantResumes();
+    if (Object.keys(responseObject).length !== 0) {
+      console.log("response object in Candidates", responseObject);
+      getRelevantResumes();
+    }
   }, [responseObject]);
 
   async function getRelevantResumes() {
@@ -85,7 +87,6 @@ function Candidates({ gptResponse }) {
         {" "}
         https://careers.staples.com/en/job/framingham/software-engineer-iii-front-end-developer/44412/68181313840?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic{" "}
       </p>
-      {/* <p>{gptResponse}</p> */}
 
       {relevantResumes && relevantResumes.length > 0 ? (
         relevantResumes.map((resume, index) => (
@@ -96,7 +97,7 @@ function Candidates({ gptResponse }) {
           />
         ))
       ) : (
-        <p>No relevant resumes found.</p>
+        <p>Please Enter A Job URL to filter Resumes</p>
       )}
     </div>
   );

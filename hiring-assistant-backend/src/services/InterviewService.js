@@ -128,8 +128,10 @@ class InterviewService {
 
     try {
       await fs.access(filePath);
+      console.log("File Found: ", filePath);
       return true;
     } catch (error) {
+      console.log("File Not Found: ", filePath);
       return false;
     }
   }

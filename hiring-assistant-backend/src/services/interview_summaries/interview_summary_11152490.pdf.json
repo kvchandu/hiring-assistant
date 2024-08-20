@@ -1,0 +1,18 @@
+[
+  {
+    "role": "User",
+    "content": "I am not a principal Actually. Why did you think so?"
+  },
+  {
+    "role": "AI",
+    "content": "Hello, [Candidate's Name]! The job description I have is for a Deputy Principal. Here is a summarized version:\n\nThis position is for a Deputy Principal who is results-oriented and resourceful with proven ability to develop and implement educational strategies. The role involves managing daily operations, staff, budgets, and ensuring compliance with education regulations. Key skills needed include leadership, communication, project management, and staff training. The ideal candidate should be tech-savvy and proficient in Microsoft Office Suite.\n\nBased on your resume, it seems like you have a background in education and leadership roles. Let's start with your education: You have a Master Certificate in Six Sigma and a Certificate of Achievement in Lean Six Sigma Black Belt. However, the job requirements mention a Mid-Management Principal Certification. Can you tell me more about your coursework or any academic involvement related to educational leadership and management?"
+  },
+  {
+    "role": "User",
+    "content": "My coursework is not realted in any way to what you want. "
+  },
+  {
+    "role": "AI",
+    "content": "Thank you for sharing that. Moving on to your work experience, you have held various positions such as Deputy Principal, Director of School Improvement, Fraud Analyst, Coordinator of College & Career Readiness, Web Support Specialist, Enterprise Business Operations Specialist, Deposit Sales and Services Specialist, and Human Resource Manager.\n\nGiven your experience in education, finance, fraud analysis, web support, and human resources, how do you think your background aligns with the requirements of the Deputy Principal role, especially in terms of managing daily operations, staff, budgets, and ensuring compliance with educational regulations?\n\nDo you have any examples from your previous roles that demonstrate your ability to develop and implement educational strategies or policies that improve outcomes for students and stakeholders?"
+  }
+]

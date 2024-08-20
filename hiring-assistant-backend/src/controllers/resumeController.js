@@ -241,7 +241,7 @@ const getResumeScore = async (req, res) => {
       "../prompts/match_skills.txt"
     );
 
-    console.log("***", matching_skills_prompt, "***");
+    // console.log("***", matching_skills_prompt, "***");
     const prompt = PromptTemplate.fromTemplate(matching_skills_prompt);
     const formattedPrompt = await prompt.format({
       job_description: descriptionString,

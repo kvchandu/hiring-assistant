@@ -1,0 +1,26 @@
+[
+  {
+    "role": "User",
+    "content": "Yes I am ready to begin"
+  },
+  {
+    "role": "AI",
+    "content": "Hello, [Candidate's Name]! I will be conducting an interview with you today for a position as a Manager and Executive Chef. Here is a summarized version of the job description: \nThe position requires a results-oriented manager with expertise in inventory control, expense control, team building, staff training, budget allocation, business recovery, and conflict resolution. The candidate should have strong leadership skills and the ability to thrive in a fast-paced environment. Does this sound like a role you would be interested in and qualified for?"
+  },
+  {
+    "role": "User",
+    "content": "Yes I do believe I am qualified for whatever you are looking for as you can see my resume. "
+  },
+  {
+    "role": "AI",
+    "content": "Great! Let's start with your educational background. The job requires a degree in Culinary Arts or Food and Beverage Management. I see that you have an Associate Degree in Applied Food Science and Culinary Arts/Food and Beverage Management from Johnson & Wales University. Could you tell me about a specific coursework or project during your education that you believe has prepared you well for a managerial role in the culinary industry?"
+  },
+  {
+    "role": "User",
+    "content": "Your question is self explanatory. My Experience during my education has equipped me with skills. "
+  },
+  {
+    "role": "AI",
+    "content": "That's great to hear! Let's move on to your work experience. Your resume shows a diverse range of positions in the culinary industry, including roles such as Executive Chef, General Manager, Sous Chef, and Kitchen Manager. Can you walk me through how your experience aligns with the requirements of the Manager and Executive Chef position, specifically focusing on areas such as inventory control, expense control, team building, and conflict resolution?"
+  }
+]
